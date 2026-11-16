@@ -10,7 +10,7 @@ updates:
       python-deps:
         patterns: ["*"]
     labels: ["dependencies"]
-    open-pull-requests-limit: 3
+    open-pull-requests-limit: 0  # 실습 중 자동 PR 억제 (이슈 번호 맞추기)
 
   - package-ecosystem: github-actions
     directory: /
@@ -21,9 +21,11 @@ updates:
       actions:
         patterns: ["*"]
     labels: ["dependencies"]
+    open-pull-requests-limit: 0  # 실습 중 자동 PR 억제 (이슈 번호 맞추기)
 
   - package-ecosystem: docker
     directory: /
     schedule:
       interval: weekly
     labels: ["dependencies"]
+    open-pull-requests-limit: 0  # 실습 중 자동 PR 억제 (이슈 번호 맞추기)
