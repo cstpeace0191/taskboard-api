@@ -181,3 +181,29 @@ def test_patch_null_done_returns_422():
     r = client.patch("/tasks/1", json={"done": None})
     assert r.status_code == 422
     assert client.get("/tasks/1").json()["done"] is False
+
+
+def test_stats_empty_repo_returns_all_zeros():
+    r = client.get("/tasks/stats")
+    assert r.status_code == 200
+    assert r.json() == {
+        "total": 0,
+        "done": 0,
+        "open": 0,
+        "by_priority": {"low": 0, "medium": 0, "high": 0},
+    }
+
+
+def test_stats_counts_done_open_and_priority():
+    make(1, priority="medium")
+    make(2, priority="medium")
+    make(3, priority="high")
+    client.patch("/tasks/1", json={"done": True})
+    r = client.get("/tasks/stats")
+    assert r.status_code == 200
+    assert r.json() == {
+        "total": 3,
+        "done": 1,
+        "open": 2,
+        "by_priority": {"low": 0, "medium": 2, "high": 1},
+    }
