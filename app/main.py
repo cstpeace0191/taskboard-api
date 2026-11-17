@@ -46,7 +46,7 @@ def create_task(task: Task) -> Task:
 @app.get("/tasks")
 def list_tasks(done: bool | None = None, priority: Priority | None = None) -> list[Task]:
     tasks = sorted(TASKS.values(), key=lambda t: t.id)
-    if done:
+    if done is not None:
         tasks = [t for t in tasks if t.done == done]
     if priority is not None:
         tasks = [t for t in tasks if t.priority == priority]
