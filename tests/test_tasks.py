@@ -112,3 +112,58 @@ def test_delete_task():
     make(1)
     assert client.delete("/tasks/1").status_code == 204
     assert client.get("/tasks/1").status_code == 404
+
+
+def test_patch_empty_title_returns_422_and_keeps_title():
+    make(1, "a")
+    r = client.patch("/tasks/1", json={"title": ""})
+    assert r.status_code == 422
+    assert client.get("/tasks/1").json()["title"] == "a"
+
+
+def test_patch_title_over_200_chars_returns_422():
+    make(1, "a")
+    r = client.patch("/tasks/1", json={"title": "x" * 201})
+    assert r.status_code == 422
+    assert client.get("/tasks/1").json()["title"] == "a"
+
+
+def test_patch_title_at_200_chars_is_accepted():
+    make(1, "a")
+    r = client.patch("/tasks/1", json={"title": "x" * 200})
+    assert r.status_code == 200
+    assert r.json()["title"] == "x" * 200
+
+
+def test_patch_invalid_priority_returns_422_and_keeps_task():
+    make(1, "a", priority="high")
+    r = client.patch("/tasks/1", json={"priority": "urgent", "title": "b"})
+    assert r.status_code == 422
+    assert client.get("/tasks/1").json() == {
+        "id": 1,
+        "title": "a",
+        "done": False,
+        "priority": "high",
+    }
+
+
+def test_failed_patch_does_not_change_any_field():
+    make(1, "a", priority="low")
+    before = client.get("/tasks/1").json()
+    r = client.patch("/tasks/1", json={"title": "", "done": True, "priority": "high"})
+    assert r.status_code == 422
+    assert client.get("/tasks/1").json() == before
+
+
+def test_patch_null_title_returns_422_and_keeps_title():
+    make(1, "a")
+    r = client.patch("/tasks/1", json={"title": None})
+    assert r.status_code == 422
+    assert client.get("/tasks/1").json()["title"] == "a"
+
+
+def test_patch_null_done_returns_422():
+    make(1, "a")
+    r = client.patch("/tasks/1", json={"done": None})
+    assert r.status_code == 422
+    assert client.get("/tasks/1").json()["done"] is False

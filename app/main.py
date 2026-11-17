@@ -4,10 +4,10 @@
 실습 이슈(scripts/issues/*.md)에 적힌 버그가 일부러 남아 있습니다.
 """
 
-from typing import Literal
+from typing import Any, Literal
 
 from fastapi import FastAPI, HTTPException, Response
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 app = FastAPI(title="TaskBoard API", version="0.2.0")
 
@@ -22,9 +22,19 @@ class Task(BaseModel):
 
 
 class TaskUpdate(BaseModel):
-    title: str | None = None
+    title: str | None = Field(default=None, min_length=1, max_length=200)
     done: bool | None = None
     priority: Priority | None = None
+
+    @model_validator(mode="before")
+    @classmethod
+    def reject_explicit_null(cls, data: Any) -> Any:
+        # POST는 null을 거부하므로 PATCH도 명시된 null은 422로 막는다 (미지정 필드는 허용)
+        if isinstance(data, dict):
+            for name, value in data.items():
+                if value is None:
+                    raise ValueError(f"{name} must not be null")
+        return data
 
 
 TASKS: dict[int, Task] = {}
