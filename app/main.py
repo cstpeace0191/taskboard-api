@@ -4,7 +4,7 @@
 실습 이슈(scripts/issues/*.md)에 적힌 버그가 일부러 남아 있습니다.
 """
 
-from typing import Any, Literal
+from typing import Any, Literal, get_args
 
 from fastapi import FastAPI, HTTPException, Response
 from pydantic import BaseModel, Field, model_validator
@@ -61,6 +61,20 @@ def list_tasks(done: bool | None = None, priority: Priority | None = None) -> li
     if priority is not None:
         tasks = [t for t in tasks if t.priority == priority]
     return tasks
+
+
+# 고정 경로(/tasks/stats)는 /tasks/{task_id}보다 먼저 선언해야 한다
+@app.get("/tasks/stats")
+def task_stats() -> dict:
+    tasks = list(TASKS.values())
+    done = sum(1 for t in tasks if t.done)
+    by_priority = {p: sum(1 for t in tasks if t.priority == p) for p in get_args(Priority)}
+    return {
+        "total": len(tasks),
+        "done": done,
+        "open": len(tasks) - done,
+        "by_priority": by_priority,
+    }
 
 
 @app.get("/tasks/{task_id}")
